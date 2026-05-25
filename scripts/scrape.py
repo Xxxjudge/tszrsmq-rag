@@ -23,11 +23,10 @@ def _headers(cookie: str, referer: str = "") -> dict:
         "Cookie": cookie,
         "User-Agent": (
             "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) "
-            "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/20A362 MicroMessenger/8.0"
+            "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/20A362"
         ),
         "Referer": referer or f"https://m.weibo.cn/u/{UID}",
         "Accept": "application/json, text/plain, */*",
-        "X-Requested-With": "XMLHttpRequest",
         "MWeibo-Pwa": "1",
     }
 
@@ -85,10 +84,18 @@ def fetch_page(page: int, cookie: str) -> list[dict]:
     return posts
 
 
-def scrape_all(cookie: str, max_pages: int = 200, sleep_sec: float = 1.5) -> list[dict]:
-    """分页抓取全部微博，遇到空页或重复停止。"""
+def scrape_all(
+    cookie: str,
+    max_pages: int = 200,
+    sleep_sec: float = 1.5,
+    existing_ids: set[str] | None = None,
+) -> list[dict]:
+    """分页抓取微博。
+    existing_ids 非空时为增量模式：遇到已有 ID 即停止，只返回新帖子。
+    """
     all_posts = []
-    seen_ids: set[str] = set()
+    seen_ids: set[str] = set(existing_ids or [])
+    is_incremental = bool(existing_ids)
 
     for page in range(1, max_pages + 1):
         try:
@@ -99,13 +106,13 @@ def scrape_all(cookie: str, max_pages: int = 200, sleep_sec: float = 1.5) -> lis
 
         new_posts = [p for p in posts if p["id"] not in seen_ids]
         if not new_posts:
-            print(f"Page {page}: no new posts, stopping.")
+            print(f"Page {page}: {'已追上最新数据' if is_incremental else 'no new posts'}，stopping.")
             break
 
         for p in new_posts:
             seen_ids.add(p["id"])
         all_posts.extend(new_posts)
-        print(f"Page {page}: +{len(new_posts)} posts, total {len(all_posts)}")
+        print(f"Page {page}: +{len(new_posts)} new posts, total new {len(all_posts)}")
         time.sleep(sleep_sec)
 
     return all_posts
