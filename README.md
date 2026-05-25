@@ -1,91 +1,72 @@
-# 唐史主任司马迁 RAG 问答系统
+# 唐史主任司马迁·投资思维助手
 
-本地 RAG 问答系统，基于微博大V「唐史主任司马迁」的全部原创内容，用其知识和风格回答唐史相关问题。全程本地运行，无需联网。
+基于微博博主「唐史主任司马迁」全部原创内容构建的 Claude Code Skill，以其视角和风格回答 A 股市场、科技投资、地缘政治等问题。支持每次激活时自动抓取最新微博。
+
+## 安装 Skill
+
+```bash
+npx skills add Xxxjudge/tszrsmq-rag
+```
+
+安装后在 Claude Code 对话中直接提问即可，无需其他配置。
+
+## 配置自动更新（可选）
+
+如需每次激活时自动拉取最新微博，配置 Cookie：
+
+**第一步：获取 Cookie**
+
+浏览器打开 https://m.weibo.cn 并登录，`F12` → `Network` → 任意请求 → `Headers` → 复制 `Cookie` 字段整行。
+
+**第二步：写入 `.cookie` 文件**
+
+```bash
+nano ~/learning/tszrsmq/.cookie
+# 粘贴 Cookie 内容，Ctrl+O 保存，Ctrl+X 退出
+```
+
+配置后，每次 Skill 激活时会自动抓取最新微博并重建知识库。`.cookie` 文件不会提交到 Git。
+
+## 手动更新知识库
+
+```bash
+cd ~/learning/tszrsmq
+python scripts/build_knowledge.py
+```
 
 ## 工作原理
 
 ```
-抓取微博 → 清洗分块 → bge-m3 向量化 → Chroma 存储
-                                              ↓
-用户提问 → 向量检索 Top-5 → qwen3.5 生成回答
-```
-
-## 环境要求
-
-- macOS（Apple Silicon 推荐）
-- Python 3.11+
-- [Ollama](https://ollama.com/download)
-
-## 快速开始
-
-**1. 安装依赖**
-
-```bash
-pip install -r requirements.txt
-```
-
-**2. 安装 Ollama 并拉取模型**
-
-```bash
-# M 系列 Mac 推荐 MLX 版本
-ollama pull qwen3.5:9b-mlx
-```
-
-**3. 获取微博 Cookie**
-
-浏览器打开 https://m.weibo.cn 并登录，F12 → Network → 任意请求 → Headers → 复制 `Cookie` 字段整行。
-
-**4. 抓取数据**
-
-```bash
-# 先测试 3 页
-python scripts/scrape.py --cookie "YOUR_COOKIE" --out data/raw/weibo_test.json --max-pages 3
-
-# 确认正常后抓全量（约 10000+ 条，需要几分钟）
-python scripts/scrape.py --cookie "YOUR_COOKIE" --out data/raw/weibo.json --max-pages 200
-```
-
-**5. 向量化入库**
-
-```bash
-python scripts/process.py --input data/raw/weibo.json
-```
-
-首次运行会下载 bge-m3 模型（约 2GB），入库耗时约 10~30 分钟。
-
-**6. 开始对话**
-
-```bash
-python scripts/chat.py
+Skill 激活
+    ↓
+运行 build_knowledge.py
+    ├── .cookie 存在 → 抓取最新微博（含长文全文）→ 重建 knowledge/weibo_knowledge.md
+    └── .cookie 不存在 → 使用现有知识库
+    ↓
+Claude 读取知识库，以唐史主任司马迁的视角回答问题
 ```
 
 ## 目录结构
 
 ```
+├── SKILL.md                    # Claude Code Skill 主文件
+├── knowledge/
+│   └── weibo_knowledge.md      # 清洗后的微博知识库（自动生成）
 ├── scripts/
-│   ├── scrape.py       # 微博数据抓取
-│   ├── process.py      # 清洗、分块、向量化入库
-│   └── chat.py         # 检索 + 问答交互
+│   ├── scrape.py               # 微博抓取（支持长文全文）
+│   ├── build_knowledge.py      # 更新数据 + 重建知识库
+│   ├── process.py              # 文本清洗/分块/向量化（RAG 备用）
+│   └── chat.py                 # 命令行问答（RAG 备用）
 ├── tests/
-│   ├── test_process.py # 清洗/分块单元测试
-│   └── test_chat.py    # prompt 构建单元测试
-├── data/
-│   └── raw/            # 原始抓取数据（不入库）
-├── chroma_db/          # 向量数据库（不入库）
+│   ├── test_process.py
+│   └── test_chat.py
+├── .cookie                     # 微博 Cookie（本地，不提交）
 └── requirements.txt
 ```
 
-## 运行测试
+## 本地开发
 
 ```bash
+pip install -r requirements.txt
 pytest tests/ -v
-```
-
-## 切换模型
-
-在 `scripts/chat.py` 第 44 行修改模型名：
-
-```python
-model="qwen3.5:9b-mlx",   # M 系列 Mac 推荐
-# model="qwen3.5:4b",     # 内存较小时用这个
 ```
