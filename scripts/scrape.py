@@ -15,11 +15,11 @@ import requests
 UID = "2014433131"
 CONTAINERID = f"107603{UID}"
 API_URL = "https://m.weibo.cn/api/container/getIndex"
+LONGTEXT_URL = "https://m.weibo.cn/statuses/longtext"
 
 
-def fetch_page(page: int, cookie: str) -> list[dict]:
-    """抓取单页微博，返回原始 post 列表。"""
-    headers = {
+def _headers(cookie: str) -> dict:
+    return {
         "Cookie": cookie,
         "User-Agent": (
             "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) "
@@ -29,25 +29,52 @@ def fetch_page(page: int, cookie: str) -> list[dict]:
         "Accept": "application/json, text/plain, */*",
         "MWeibo-Pwa": "1",
     }
+
+
+def fetch_longtext(post_id: str, cookie: str) -> str | None:
+    """获取长微博全文，失败返回 None。"""
+    try:
+        resp = requests.get(
+            LONGTEXT_URL,
+            params={"id": post_id},
+            headers=_headers(cookie),
+            timeout=15,
+        )
+        resp.raise_for_status()
+        return resp.json().get("data", {}).get("longTextContent")
+    except Exception:
+        return None
+
+
+def fetch_page(page: int, cookie: str) -> list[dict]:
+    """抓取单页微博，长文自动补全全文。"""
     params = {
         "uid": UID,
         "type": "uid",
         "page": page,
         "containerid": CONTAINERID,
     }
-    resp = requests.get(API_URL, params=params, headers=headers, timeout=15)
+    resp = requests.get(API_URL, params=params, headers=_headers(cookie), timeout=15)
     resp.raise_for_status()
-    data = resp.json()
-    cards = data.get("data", {}).get("cards", [])
+    cards = resp.json().get("data", {}).get("cards", [])
 
     posts = []
     for card in cards:
         if card.get("card_type") != 9:
             continue
         mblog = card.get("mblog", {})
+        text = mblog.get("text", "")
+
+        # 长文截断时补抓全文
+        if mblog.get("isLongText") or "全文</a>" in text:
+            full = fetch_longtext(mblog.get("id"), cookie)
+            if full:
+                text = full
+            time.sleep(0.5)
+
         posts.append({
             "id": mblog.get("id"),
-            "text": mblog.get("text", ""),
+            "text": text,
             "created_at": mblog.get("created_at", ""),
             "reposts_count": mblog.get("reposts_count", 0),
             "is_repost": "retweeted_status" in mblog,
