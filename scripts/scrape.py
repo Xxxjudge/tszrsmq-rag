@@ -8,6 +8,7 @@
 """
 import argparse
 import json
+import re
 import time
 
 import requests
@@ -15,33 +16,35 @@ import requests
 UID = "2014433131"
 CONTAINERID = f"107603{UID}"
 API_URL = "https://m.weibo.cn/api/container/getIndex"
-LONGTEXT_URL = "https://m.weibo.cn/statuses/longtext"
 
 
-def _headers(cookie: str) -> dict:
+def _headers(cookie: str, referer: str = "") -> dict:
     return {
         "Cookie": cookie,
         "User-Agent": (
             "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) "
-            "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/20A362"
+            "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/20A362 MicroMessenger/8.0"
         ),
-        "Referer": f"https://m.weibo.cn/u/{UID}",
+        "Referer": referer or f"https://m.weibo.cn/u/{UID}",
         "Accept": "application/json, text/plain, */*",
+        "X-Requested-With": "XMLHttpRequest",
         "MWeibo-Pwa": "1",
     }
 
 
 def fetch_longtext(post_id: str, cookie: str) -> str | None:
-    """获取长微博全文，失败返回 None。"""
+    """从 detail 页面抓取长微博全文，失败返回 None。"""
     try:
-        resp = requests.get(
-            LONGTEXT_URL,
-            params={"id": post_id},
-            headers=_headers(cookie),
-            timeout=15,
-        )
+        url = f"https://m.weibo.cn/detail/{post_id}"
+        resp = requests.get(url, headers=_headers(cookie, referer=url), timeout=15)
         resp.raise_for_status()
-        return resp.json().get("data", {}).get("longTextContent")
+        match = re.search(
+            r'var \$render_data = (\[.*?\])\[0\]', resp.text, re.DOTALL
+        )
+        if not match:
+            return None
+        data = json.loads(match.group(1))
+        return data[0].get("status", {}).get("text")
     except Exception:
         return None
 
@@ -54,7 +57,7 @@ def fetch_page(page: int, cookie: str) -> list[dict]:
         "page": page,
         "containerid": CONTAINERID,
     }
-    resp = requests.get(API_URL, params=params, headers=_headers(cookie), timeout=15)
+    resp = requests.get(API_URL, params=params, headers=_headers(cookie, referer=f"https://m.weibo.cn/u/{UID}"), timeout=15)
     resp.raise_for_status()
     cards = resp.json().get("data", {}).get("cards", [])
 
