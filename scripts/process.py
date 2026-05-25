@@ -110,6 +110,10 @@ def process_main():
     chunks = prepare_chunks(raw_posts)
     print(f"Prepared {len(chunks)} chunks from {len(raw_posts)} posts")
 
+    if not chunks:
+        print("No chunks to process.")
+        return
+
     model = load_model()
     embed_and_store(chunks, model)
 
