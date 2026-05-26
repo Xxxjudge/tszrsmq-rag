@@ -86,7 +86,8 @@ def build_knowledge():
             return datetime.min
 
     from datetime import datetime
-    originals = [p for p in posts if not p.get("is_repost")]
+    EXCLUDE_IDS = {"5116658270867706", "5036504751801670"}  # 置顶声明帖
+    originals = [p for p in posts if not p.get("is_repost") and p.get("id") not in EXCLUDE_IDS]
     originals.sort(key=parse_date, reverse=True)
 
     lines = [
