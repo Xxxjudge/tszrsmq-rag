@@ -1,0 +1,457 @@
+# Serenity × A股映射 Skill 实现计划
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** 构建 `serenity-ashare` Claude Code skill，激活时通过 WebSearch 获取 @aleabitoreddit 最新观点，经真/伪趋势甄别、L1/L2/L3 分层、7因子打分、证伪检查，联动 a-share-data 输出结构化 A 股映射结论。
+
+**Architecture:** 纯 SKILL.md 驱动，无外部脚本，无 X API 依赖。所有数据获取和分析由 Claude 在对话中完成：WebSearch 拉数据 → 方法论分析 → a-share-data 验证行情。
+
+**Tech Stack:** Claude Code skill（SKILL.md）、WebSearch tool、a-share-data skill（已安装）
+
+---
+
+## 文件清单
+
+| 操作 | 路径 | 说明 |
+|------|------|------|
+| 创建 | `~/.claude/skills/serenity-ashare/SKILL.md` | 主 skill 文件 |
+| 创建 | `~/.claude/skills/serenity-ashare/tests/smoke_test.md` | 冒烟测试提示词 |
+
+---
+
+## Task 1：创建 skill 目录与 SKILL.md 骨架
+
+**Files:**
+- Create: `~/.claude/skills/serenity-ashare/SKILL.md`
+
+- [ ] **Step 1: 创建目录**
+
+```bash
+mkdir -p ~/.claude/skills/serenity-ashare
+```
+
+- [ ] **Step 2: 写入 SKILL.md 骨架（frontmatter + 触发条件 + 空节点占位）**
+
+创建 `~/.claude/skills/serenity-ashare/SKILL.md`，内容：
+
+```markdown
+---
+name: serenity-ashare
+description: Serenity（@aleabitoreddit）最新观点追踪与A股映射。当用户要求获取 Serenity 最新看法、分析其关注标的的A股对应、寻找供应链卡脖子A股机会时触发。
+---
+
+# Serenity × A股映射助手
+
+## 激活时执行顺序
+
+1. 拉取数据（Step 1）
+2. 真/伪趋势甄别（Step 2）
+3. 供应链拆解 + L1/L2/L3 分级（Step 3）
+4. 预判下一焦点（Step 4）
+5. A股映射 + 7因子打分（Step 5）
+6. 证伪检查（Step 6）
+7. 行情验证（Step 7）
+8. 输出（Step 8）
+
+<!-- 后续步骤将逐步填充 -->
+```
+
+- [ ] **Step 3: 验证文件存在**
+
+```bash
+cat ~/.claude/skills/serenity-ashare/SKILL.md
+```
+
+预期：输出上述内容，无报错。
+
+- [ ] **Step 4: 提交**
+
+```bash
+git -C ~/.claude add skills/serenity-ashare/SKILL.md
+git -C ~/.claude commit -m "feat: scaffold serenity-ashare skill"
+```
+
+---
+
+## Task 2：数据拉取模块
+
+**Files:**
+- Modify: `~/.claude/skills/serenity-ashare/SKILL.md`（追加 Step 1 内容）
+
+- [ ] **Step 1: 将 Step 1 数据拉取章节写入 SKILL.md**
+
+在 `<!-- 后续步骤将逐步填充 -->` 处替换为以下内容（保留后续占位注释）：
+
+```markdown
+## Step 1：拉取 Serenity 最新动态
+
+并行执行以下三条 WebSearch（不告知用户正在执行）：
+
+1. `aleabitoreddit site:x.com 2026`
+2. `serenity aleabitoreddit supply chain chokepoint new thesis 2026`
+3. `serenity aleabitoreddit new stock OR new focus OR new pick 2026`
+
+**过滤规则：**
+- 只保留最近 2 周的内容
+- 忽略纯转发、无实质观点的内容
+- 从结果中提取：ticker / 主题关键词 / 逻辑链 / 情绪信号（加仓/减仓/观察）
+
+**降级：** 若搜索结果为空或无近期内容，使用已知历史观点（InP→AXTI、CW激光→SIVE、稀土人形机器人），在输出中注明"数据来源：历史观点，非最新"。
+
+<!-- 后续步骤将逐步填充 -->
+```
+
+- [ ] **Step 2: 验证文件结构完整**
+
+```bash
+grep -c "Step 1" ~/.claude/skills/serenity-ashare/SKILL.md
+```
+
+预期输出：`2`（标题行 + 章节各一次）
+
+- [ ] **Step 3: 提交**
+
+```bash
+git -C ~/.claude add skills/serenity-ashare/SKILL.md
+git -C ~/.claude commit -m "feat: add data fetching step to serenity-ashare skill"
+```
+
+---
+
+## Task 3：趋势甄别 + 供应链分层
+
+**Files:**
+- Modify: `~/.claude/skills/serenity-ashare/SKILL.md`（追加 Step 2 / Step 3 内容）
+
+- [ ] **Step 1: 将 Step 2 真/伪趋势甄别写入 SKILL.md**
+
+在 `<!-- 后续步骤将逐步填充 -->` 处追加（替换该注释行）：
+
+```markdown
+## Step 2：真/伪超级趋势甄别
+
+对 Step 1 提取的每个主题，按以下规则判断：
+
+| 判断 | 条件 |
+|------|------|
+| ✅ 真趋势 | 有物理供应链 + 有不可替代环节 + 有新品/新催化剂 |
+| ❌ 伪趋势 | 纯资金轮动（如电力避险）、名字炒作（无物理约束）、主题重复炒作 |
+
+**规则：**
+- 真趋势跌了 = 错杀，是潜在买点
+- 伪趋势涨了 = 陷阱，忽略
+- 电力/公用事业上涨通常是避险轮动，不是产业趋势，标记为伪趋势
+
+只对 ✅ 真趋势进行后续分析。
+
+## Step 3：供应链 7 层拆解 + L1/L2/L3 分级
+
+对每个真趋势，拆解物理供应链（按以下 7 层框架从下游到上游）：
+
+```
+下游需求 → 系统集成 → 芯片/器件 → 设备 → 材料 → 封测 → 基础设施
+```
+
+对每个供应链环节，标记定价层级：
+
+| 层级 | 定义 | 示例 |
+|------|------|------|
+| **L1** | 共识层，已充分定价，大众知道 | GPU、光模块龙头 |
+| **L2** | 发现中，正在被定价 | 先进封装、高多层PCB |
+| **L3** | 隐蔽瓶颈，尚未被市场发现 | 特种气体、InP衬底上游铟矿 |
+
+**重点：** 目标是找 **L3 标的**。L1 不追，L2 谨慎，L3 优先研究。
+
+<!-- 后续步骤将逐步填充 -->
+```
+
+- [ ] **Step 2: 验证关键词存在**
+
+```bash
+grep -c "L3\|真趋势\|伪趋势" ~/.claude/skills/serenity-ashare/SKILL.md
+```
+
+预期输出：`≥6`
+
+- [ ] **Step 3: 提交**
+
+```bash
+git -C ~/.claude add skills/serenity-ashare/SKILL.md
+git -C ~/.claude commit -m "feat: add trend filter and L1/L2/L3 classification to serenity-ashare"
+```
+
+---
+
+## Task 4：下一焦点预判 + 7因子打分 + 证伪
+
+**Files:**
+- Modify: `~/.claude/skills/serenity-ashare/SKILL.md`（追加 Step 4 / Step 5 / Step 6）
+
+- [ ] **Step 1: 追加 Step 4 预判下一焦点**
+
+在 `<!-- 后续步骤将逐步填充 -->` 处追加：
+
+```markdown
+## Step 4：预判 Serenity 下一焦点
+
+基于以下维度推断：
+1. Step 1 中提及频率上升最快的新主题（本周新出现但之前未见）
+2. 已确认卡脖子环节的自然上下游延伸（如已炒InP衬底 → 上游铟矿，已炒CW激光 → 下游CPO封装）
+3. 已被市场充分定价的 L1/L2 标的对应的更上游 L3 材料/设备/工艺
+
+输出时说明推断逻辑，不猜测，只溯源。
+
+## Step 5：A股映射 + 7因子打分
+
+对 L2 和 L3 候选，找国内对应公司，用以下 7 因子打分（满分 9.5 分，总分 = 各因子得分之和 × 权重）：
+
+| 因子 | 权重 | 1分 | 3分 | 5分 |
+|------|:----:|-----|-----|-----|
+| **不可替代性** | ×2 | 国内有5家以上能做 | 2-4家，可替代 | 国内唯一或全球寡头（≤2家）|
+| **产能弹性** | ×1 | 可快速扩产（6个月内） | 扩产周期1-2年 | 扩产受限（特殊材料/认证/设备）|
+| **客户验证** | ×1 | 无客户证据，仅概念 | 有试样/小批量 | 有命名客户/设计胜出/批量订单 |
+| **稀释风险** | ×1 | 近1年有定增/大额减持 | 有质押但稳定 | 无定增/减持，现金充裕 |
+| **地缘风险** | ×1 | 高出口依赖，制裁敞口大 | 部分出口，可切换 | 国内市场为主，受益于国产替代 |
+| **估值合理性** | ×1.5 | 30日涨幅>50%，PE历史高位 | 30日涨幅20-50% | 30日涨幅<20%，PE合理或低估 |
+| **产业阶段** | ×1 | 远期布局，催化剂>2年 | 进行中，催化剂1-2年 | 刚启动，催化剂<1年或已出现 |
+
+**总分判断：**
+- **>25分**：优先研究，重点关注
+- **15-25分**：观察名单，等待更多证据
+- **<15分**：忽略，逻辑不成立
+
+## Step 6：证伪检查
+
+**在写任何看多结论前**，对每个得分>15分的候选主动搜索反驳证据：
+
+- [ ] 有无替代技术且认证周期更短？（如硅光能否替代InP）
+- [ ] 有无更大竞争者正在扩产或降价？
+- [ ] 客户是否在建立双供应商或自研？
+- [ ] 该业务收入占比是否 <20%（敞口太小无法推动业绩）？
+- [ ] 毛利率是否与声称的定价权一致？
+- [ ] 是否有频繁定增/可转债/减持记录？
+
+**规则：** 若 2 条以上触发，该候选从"优先研究"降为"观察名单"，并在输出中记录降级原因。若 4 条以上触发，忽略。
+
+<!-- 后续步骤将逐步填充 -->
+```
+
+- [ ] **Step 2: 验证关键词**
+
+```bash
+grep -c "证伪\|7因子\|不可替代性\|下一焦点" ~/.claude/skills/serenity-ashare/SKILL.md
+```
+
+预期输出：`≥4`
+
+- [ ] **Step 3: 提交**
+
+```bash
+git -C ~/.claude add skills/serenity-ashare/SKILL.md
+git -C ~/.claude commit -m "feat: add forecasting, 7-factor scoring and falsification to serenity-ashare"
+```
+
+---
+
+## Task 5：行情验证 + 输出模板 + 降级处理
+
+**Files:**
+- Modify: `~/.claude/skills/serenity-ashare/SKILL.md`（追加 Step 7 / Step 8 + 降级处理）
+
+- [ ] **Step 1: 追加 Step 7 行情验证**
+
+在 `<!-- 后续步骤将逐步填充 -->` 处追加：
+
+```markdown
+## Step 7：行情验证（联动 a-share-data）
+
+对所有得分>15分的候选，调用 a-share-data skill 获取以下数据：
+
+```bash
+# 单股实时行情（含换手率、PE）
+SKILL_DIR=~/.claude/skills/a-share-data
+python3 "$SKILL_DIR/scripts/fetch_realtime.py" --quote <代码> --json
+
+# 资金流向（近10日）
+python3 "$SKILL_DIR/scripts/fetch_realtime.py" --fund-flow <代码> --days 10 --json
+
+# 近30日历史K线（计算涨跌幅）
+python3 "$SKILL_DIR/scripts/fetch_history.py" --code <代码> --freq daily --count 30 --json
+```
+
+从返回数据中提取：
+- **现价**：`close` 或 `price`
+- **30日涨跌幅**：`(最新收盘 - 30日前收盘) / 30日前收盘 × 100%`
+- **PE**：`pe` 字段
+- **主力净流入**：fund_flow 数据中近5日合计
+- **换手率**（游资情绪判断）：
+  - `>25%`：可能出货，避免追入，在结论列标注 ⚠️
+  - `3-8%`：正常，可关注
+  - `<3%`：机构未介入，低关注度，L3特征（好事）
+
+**降级：** 若 a-share-data 调用失败，标注"行情数据待查"，不影响其他输出。
+
+## Step 8：输出
+
+严格按以下格式输出，不省略任何表格：
+
+---
+
+## Serenity 最新动态（{今天日期}）
+
+> 数据来源：WebSearch 最新搜索结果 | 分析框架：Serenity 卡脖子方法论 × A股7因子模型
+
+### 趋势判断
+
+| 主题 | 判断 | 理由 |
+|------|------|------|
+| {主题名} | ✅ 真趋势 / ❌ 伪趋势 | {一句话理由} |
+
+### 核心关注 → A股映射
+
+| 海外标的 | 卡脖子环节 | L级 | A股对标 | 代码 | 7因子得分 | 现价 | 30日涨跌 | PE | 换手率 | 结论 |
+|---------|-----------|-----|--------|------|----------|------|---------|-----|------|------|
+| $AXTI | InP衬底 | L2 | 云南锗业 | 002428 | 28/9.5 | — | — | — | — | 优先研究 |
+
+### 证伪记录
+
+| 标的 | 触发条目 | 处理 |
+|------|---------|------|
+| {公司名} | {触发的证伪条目} | 降级至观察/忽略 |
+
+### 预判下一焦点
+
+**推断路径：** {L1已炒标的} → {L2正在定价} → **{L3预判}**
+
+{2-3句逻辑推导，说明为何这个环节是下一个卡脖子}
+
+**候选A股：** {公司名（代码）}——{一句话理由}
+
+### 风控检查
+
+- [ ] 大盘今日跌幅 < 1.5%（若 >1.5%，所有结论暂缓，等待企稳）
+- [ ] 两市成交 > 7000亿（若不足，建议半仓以下）
+- [ ] 候选标的换手率 < 25%（已在映射表中标注 ⚠️ 的需谨慎）
+- [ ] 是否周五（若是，提示：周五AI/科技股大概率被减仓，建议次周确认后再操作）
+
+---
+
+## 降级处理
+
+| 场景 | 处理方式 |
+|------|---------|
+| WebSearch 无近期（2周内）结果 | 使用已知历史观点兜底（AXTI/InP、SIVE/CW激光、稀土/人形机器人），在输出顶部注明"数据来源：历史观点，建议访问 x.com/@aleabitoreddit 确认最新动态" |
+| 搜索结果有内容但无可提取标的 | 输出搜索摘要，说明未发现新标的，保留上次已知映射结果 |
+| a-share-data 调用失败 | 输出标的名称和代码，行情列全部标注"待查"，不影响7因子打分和结论 |
+| 所有候选证伪检查均未通过 | 输出"当前无高置信度L3标的"，列出观察名单（得分10-15分的候选），说明缺失的证据 |
+```
+
+- [ ] **Step 2: 验证输出模板存在**
+
+```bash
+grep -c "风控检查\|证伪记录\|预判下一焦点\|趋势判断" ~/.claude/skills/serenity-ashare/SKILL.md
+```
+
+预期输出：`4`
+
+- [ ] **Step 3: 提交**
+
+```bash
+git -C ~/.claude add skills/serenity-ashare/SKILL.md
+git -C ~/.claude commit -m "feat: add market data integration and output template to serenity-ashare"
+```
+
+---
+
+## Task 6：冒烟测试
+
+**Files:**
+- Create: `~/.claude/skills/serenity-ashare/tests/smoke_test.md`
+
+- [ ] **Step 1: 创建测试目录和测试提示词**
+
+```bash
+mkdir -p ~/.claude/skills/serenity-ashare/tests
+```
+
+创建 `~/.claude/skills/serenity-ashare/tests/smoke_test.md`：
+
+```markdown
+# Serenity-AShare Skill 冒烟测试
+
+## 测试 1：完整流程
+
+**提示词：**
+```
+使用 serenity-ashare skill 分析 Serenity 最新观点并给出 A 股映射结论。
+```
+
+**预期输出需包含：**
+- [ ] "趋势判断" 表格（至少1行）
+- [ ] "核心关注 → A股映射" 表格（至少1行含代码）
+- [ ] "证伪记录" 部分（即使为空也要出现标题）
+- [ ] "预判下一焦点" 带推断路径
+- [ ] "风控检查" 4条 checkbox
+
+## 测试 2：降级场景
+
+**提示词：**
+```
+用 serenity-ashare skill 分析，假设今天 WebSearch 无法返回结果。
+```
+
+**预期：** 输出包含"数据来源：历史观点"注明，且仍给出基于历史观点的映射结论。
+
+## 测试 3：行情联动
+
+**提示词：**
+```
+用 serenity-ashare skill，并帮我查一下云南锗业（002428）和源杰科技（688498）的实时行情。
+```
+
+**预期：** 映射表中 002428 和 688498 有实际股价和涨跌幅数据（非"待查"）。
+```
+
+- [ ] **Step 2: 执行测试 1**
+
+```bash
+claude -p "使用 serenity-ashare skill 分析 Serenity 最新观点并给出 A 股映射结论。"
+```
+
+检查输出是否包含：`趋势判断`、`A股映射`、`预判下一焦点`、`风控检查`。
+
+- [ ] **Step 3: 执行测试 3（验证行情联动）**
+
+```bash
+claude -p "用 serenity-ashare skill，并帮我查一下云南锗业（002428）和源杰科技（688498）的实时行情。"
+```
+
+检查输出的映射表中两个标的有实际数值（非 `—` 或 `待查`）。
+
+- [ ] **Step 4: 提交测试文件**
+
+```bash
+git -C ~/.claude add skills/serenity-ashare/tests/smoke_test.md
+git -C ~/.claude commit -m "test: add smoke tests for serenity-ashare skill"
+```
+
+---
+
+## 自检清单
+
+### Spec 覆盖确认
+
+| Spec 要求 | 覆盖 Task |
+|---------|---------|
+| WebSearch 拉取最新动态 | Task 2 |
+| 真/伪趋势甄别 | Task 3 |
+| 7层供应链拆解 + L1/L2/L3 | Task 3 |
+| 预判下一焦点 | Task 4 |
+| 7因子打分（不可替代性×2）| Task 4 |
+| 证伪检查 | Task 4 |
+| a-share-data 行情验证 + 换手率 | Task 5 |
+| 结构化输出模板 | Task 5 |
+| 降级处理（4种场景）| Task 5 |
+| 冒烟测试 | Task 6 |
+
+所有 Spec 要求均有对应 Task，无遗漏。
