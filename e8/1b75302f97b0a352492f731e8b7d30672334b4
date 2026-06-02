@@ -1,0 +1,21 @@
+.agents/skills/serenity-ashare/SKILL.md
+  s_6c4987eed5b2d1::t_15abcf01582209 10-19,21-57,59-62,64,66-73,75-82,86,98-100,104,112,114,118-119,123-124,129-130,133-139,144,156-157,160,169-171,175,178-202,204-207,209,211,213,215,217,221,223,225,227-250,252,254-256,258,260,262-263,265,267,269,271-273,278-293,301-306,310-316,324-325,329-330,332-342,345-355,359-383,385-395
+.agents/skills/serenity-ashare/knowledge.md
+  s_6c4987eed5b2d1::t_15abcf01582209 1-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10-trip",
+  "base_commit_sha": "e81b75302f97b0a352492f731e8b7d30672334b4",
+  "prompts": {},
+  "sessions": {
+    "s_6c4987eed5b2d1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b166a684-c8fa-46ed-b06d-63fc4fd820b1",
+        "model": "global.anthropic.claude-sonnet-4-6"
+      },
+      "human_author": "Test User <ycheng25@trip.com>"
+    }
+  }
+}
