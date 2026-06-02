@@ -1,0 +1,19 @@
+docs/superpowers/plans/2026-06-02-serenity-ashare-skill.md
+  s_596eeffbaaabb8::t_3bee787e93d762 1-457
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10-trip",
+  "base_commit_sha": "68a63d6267384b08c2ea2caee039ca72a05cf580",
+  "prompts": {},
+  "sessions": {
+    "s_596eeffbaaabb8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b05daf23-e9ea-4846-a603-8dda750ac6ca",
+        "model": "global.anthropic.claude-sonnet-4-6"
+      },
+      "human_author": "Test User <ycheng25@trip.com>"
+    }
+  }
+}
