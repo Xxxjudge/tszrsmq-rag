@@ -1,0 +1,19 @@
+.agents/skills/serenity-ashare/tests/smoke_test.md
+  s_596eeffbaaabb8::t_63dbe302e556ec 1-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10-trip",
+  "base_commit_sha": "71c829cae6c8a66576a8722862ee05623a09bb0c",
+  "prompts": {},
+  "sessions": {
+    "s_596eeffbaaabb8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b05daf23-e9ea-4846-a603-8dda750ac6ca",
+        "model": "us.anthropic.claude-sonnet-4-6"
+      },
+      "human_author": "Test User <ycheng25@trip.com>"
+    }
+  }
+}
