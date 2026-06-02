@@ -185,3 +185,54 @@ python3 "$SKILL_DIR/scripts/fetch_history.py" --code <代码> --freq daily --cou
 | 搜索结果有内容但无可提取标的 | 输出搜索摘要，说明未发现新标的，保留上次已知映射结果 |
 | a-share-data 调用失败 | 输出标的名称和代码，行情列全部标注"待查"，不影响7因子打分和结论 |
 | 所有候选证伪检查均未通过 | 输出"当前无高置信度L3标的"，列出观察名单（得分10-15分的候选），说明缺失的证据 |
+
+## HTML 报告生成（可选）
+
+若用户要求生成报告文件，在完成 Step 1-8 后，额外执行：
+
+```python
+import subprocess, datetime, os
+
+date_str = datetime.date.today().strftime("%Y-%m-%d")
+output_path = os.path.expanduser(f"~/Desktop/serenity-{date_str}.html")
+
+# 将 Step 8 的 Markdown 输出转为 HTML（内嵌样式，无需额外依赖）
+html = f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Serenity A股映射报告 {date_str}</title>
+<style>
+  body {{ font-family: -apple-system, "PingFang SC", sans-serif; max-width: 960px; margin: 40px auto; padding: 0 20px; color: #1a1a1a; line-height: 1.6; }}
+  h2 {{ color: #1d3557; border-bottom: 2px solid #457b9d; padding-bottom: 8px; }}
+  h3 {{ color: #457b9d; margin-top: 28px; }}
+  table {{ border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 13px; }}
+  th {{ background: #1d3557; color: white; padding: 8px 12px; text-align: left; }}
+  td {{ padding: 7px 12px; border-bottom: 1px solid #e0e0e0; }}
+  tr:nth-child(even) {{ background: #f8f9fa; }}
+  .badge-true {{ color: #2d6a4f; font-weight: bold; }}
+  .badge-false {{ color: #c1121f; font-weight: bold; }}
+  .priority {{ color: #e63946; font-weight: bold; }}
+  blockquote {{ background: #f1faee; border-left: 4px solid #457b9d; margin: 0; padding: 10px 16px; color: #555; }}
+  @media print {{ body {{ margin: 20px; }} }}
+</style>
+</head>
+<body>
+{{report_content}}
+<hr style="margin-top:40px">
+<p style="color:#999;font-size:12px">生成时间：{date_str} | 数据来源：WebSearch + a-share-data | 仅供研究参考，不构成投资建议</p>
+</body>
+</html>"""
+
+# 将 Markdown 表格转为简单 HTML（无需 markdown 库）
+# 直接嵌入 pre 标签保留格式，用户可在浏览器中阅读
+report_content = "<pre style='white-space:pre-wrap;font-size:14px'>{markdown_output}</pre>"
+
+with open(output_path, 'w', encoding='utf-8') as f:
+    f.write(html.replace("{report_content}", report_content))
+
+subprocess.run(["open", output_path])  # macOS 自动在默认浏览器打开
+print(f"报告已保存至：{output_path}（浏览器内 Cmd+P 可保存为 PDF）")
+```
+
+将 `{markdown_output}` 替换为 Step 8 实际输出内容后执行，报告自动在浏览器打开。
