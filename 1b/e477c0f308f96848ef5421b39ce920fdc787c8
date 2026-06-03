@@ -1,0 +1,47 @@
+.agents/skills/tszrsmq/README.md
+  ai_agent 1-72
+.agents/skills/tszrsmq/scripts/build_knowledge.py
+  ai_agent 1-86
+.agents/skills/tszrsmq/tests/test_chat.py
+  ai_agent 1-26
+backtest_brick_firstboard.py
+  ai_agent 1-730
+skills-lock.json
+  ai_agent 1-11
+docs/superpowers/plans/2026-05-25-tszrsmq-rag.md
+  ai_agent 1-763
+knowledge/weibo_knowledge.md
+  s_afa0305443484a::t_107a9218678137 3,7-35
+.agents/skills/tszrsmq/knowledge/weibo_knowledge.md
+  ai_agent 1-619
+.agents/skills/tszrsmq/requirements.txt
+  ai_agent 1-5
+.agents/skills/tszrsmq/.gitignore
+  ai_agent 1-7
+.agents/skills/tszrsmq/scripts/process.py
+  ai_agent 1-122
+docs/superpowers/specs/2026-05-25-tszrsmq-rag-design.md
+  ai_agent 1-115
+.agents/skills/tszrsmq/scripts/chat.py
+  ai_agent 1-72
+.agents/skills/tszrsmq/tests/test_process.py
+  ai_agent 1-80
+.agents/skills/tszrsmq/scripts/scrape.py
+  ai_agent 1-125
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10-trip",
+  "base_commit_sha": "1be477c0f308f96848ef5421b39ce920fdc787c8",
+  "prompts": {},
+  "sessions": {
+    "s_afa0305443484a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5db0ab50-2be2-4f8c-b291-68c1a648831d",
+        "model": "global.anthropic.claude-sonnet-4-6"
+      },
+      "human_author": "Test User <ycheng25@trip.com>"
+    }
+  }
+}
