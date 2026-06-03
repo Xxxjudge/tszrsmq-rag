@@ -1,0 +1,19 @@
+.agents/skills/serenity-ashare/SKILL.md
+  s_5e440e515e617d::t_032b9778069113 52,54,56-178,185,189-191,193,195-208,436-439
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10-trip",
+  "base_commit_sha": "0b1deae79ff9b0f7819ebd27b0fc0123b67c86a3",
+  "prompts": {},
+  "sessions": {
+    "s_5e440e515e617d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a9af3d9f-e2e3-49f8-86c4-a297d67ed1d3",
+        "model": "us.anthropic.claude-sonnet-4-6"
+      },
+      "human_author": "Test User <ycheng25@trip.com>"
+    }
+  }
+}
