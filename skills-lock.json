@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "tszrsmq": {
+      "source": "Xxxjudge/tszrsmq-rag",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "14adb4ce12d65e0f4f2b4765a801c58fe3eb54ba3057ee809a461712e504edb0"
+    }
+  }
+}

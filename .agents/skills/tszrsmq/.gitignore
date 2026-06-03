@@ -1,0 +1,7 @@
+chroma_db/
+data/raw/
+data/cleaned/
+__pycache__/
+*.pyc
+.DS_Store
+.cookie
